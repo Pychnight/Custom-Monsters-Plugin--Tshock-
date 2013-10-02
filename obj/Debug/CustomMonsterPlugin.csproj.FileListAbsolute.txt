@@ -54,3 +54,16 @@ C:\Users\Phoenix\Documents\Visual Studio 2012\Projects\Custom-Monsters-Plugin\bi
 C:\Users\Phoenix\Documents\Visual Studio 2012\Projects\Custom-Monsters-Plugin\bin\Debug\HttpServer.xml
 C:\Users\Phoenix\Documents\Visual Studio 2012\Projects\Custom-Monsters-Plugin\obj\Debug\CustomMonsters.dll
 C:\Users\Phoenix\Documents\Visual Studio 2012\Projects\Custom-Monsters-Plugin\obj\Debug\CustomMonsters.pdb
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\obj\Debug\CustomMonsterPlugin.csprojResolveAssemblyReference.cache
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\CustomMonsters.dll
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\CustomMonsters.pdb
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\Newtonsoft.Json.dll
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\TerrariaServer.exe
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\HttpServer.dll
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\MySql.Data.dll
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\Mono.Data.Sqlite.dll
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\TShockAPI.xml
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\HttpServer.pdb
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\bin\Debug\HttpServer.xml
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\obj\Debug\CustomMonsters.dll
+D:\terraria\Tshock\Custom-Monsters-Plugin--Tshock-- Pychnight\obj\Debug\CustomMonsters.pdb
