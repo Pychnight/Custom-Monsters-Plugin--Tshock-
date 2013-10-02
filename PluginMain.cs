@@ -1,17 +1,20 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Text;
 using System.Threading;
+using System.Data;
 using Terraria;
-using Hooks;
+using TerrariaApi.Server;
 using TShockAPI;
 using TShockAPI.DB;
 using System.ComponentModel;
-using System.IO;
-using System.Reflection;
 
 namespace CustomMonsters
 {
-    [APIVersion(1, 12)]
+    [ApiVersion(1, 14)]
     public class CustomMonstersPlugin : TerrariaPlugin
     {
         private static CustomMonsterConfigFile CMConfig { get; set; }
@@ -87,7 +90,7 @@ namespace CustomMonsters
 
         public override string Author
         {
-            get { return "Created by Vharonftw - Updated by IcyPhoenix"; }
+            get { return "Created by Vharonftw - Updated by IcyPhoenix and Ported to 1.2 by Pychnight"; }
         }
 
         public override string Description
@@ -103,31 +106,39 @@ namespace CustomMonsters
         public override void Initialize()
         {
             Init = DateTime.Now;
-
-            GameHooks.Update += OnUpdate;
-            GameHooks.Initialize += OnInitialize;
-            NetHooks.GreetPlayer += OnGreetPlayer;
-            ServerHooks.Leave += OnLeave;
-            ServerHooks.Chat += OnChat;
-            NetHooks.GetData += OnGetData;
-            //NpcHooks.NetDefaults += OnNetDefaults;
-            NpcHooks.SetDefaultsInt += OnSetDefaultsInt;
-            NpcHooks.SetDefaultsString += OnSetDefaultsString;
+            
+            ServerApi.Hooks.NetGetData.Register(this, OnGetData);
+            ServerApi.Hooks.GameInitialize.Register(this, OnInitialize);
+            ServerApi.Hooks.GameUpdate.Register(this, OnUpdate);
+            ServerApi.Hooks.ServerLeave.Register(this, OnLeave);
+            //ServerApi.Hooks.ClientChatReceived.Register(this, OnGreetPlayer);
+            ServerApi.Hooks.NpcSetDefaultsInt.Register(this, OnSetDefaultsInt);
+            ServerApi.Hooks.NpcSetDefaultsString.Register(this, OnSetDefaultsString);
+            
+        //GameHooks.Update += OnUpdate;
+        //GameHooks.Initialize += OnInitialize;
+        //NetHooks.GreetPlayer += OnGreetPlayer;
+        //ServerHooks.Leave += OnLeave;
+        //ServerHooks.Chat += OnChat;
+        //NetHooks.GetData += OnGetData;
+        // was already disabled//NpcHooks.NetDefaults += OnNetDefaults;
+        //ServerApi.NpcHooks.SetDefaultsInt += OnSetDefaultsInt;
+        //ServerApi.NpcHooks.SetDefaultsString += OnSetDefaultsString;
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                GameHooks.Update -= OnUpdate;
-                GameHooks.Initialize -= OnInitialize;
-                NetHooks.GreetPlayer -= OnGreetPlayer;
-                ServerHooks.Leave -= OnLeave;
-                ServerHooks.Chat -= OnChat;
-                NetHooks.GetData -= OnGetData;
-                //NpcHooks.NetDefaults -= OnNetDefaults;
-                NpcHooks.SetDefaultsInt -= OnSetDefaultsInt;
-                NpcHooks.SetDefaultsString -= OnSetDefaultsString;
+              ServerApi.Hooks.NetGetData.Deregister(this, OnGetData);
+              ServerApi.Hooks.GameInitialize.Deregister(this, OnInitialize);
+              ServerApi.Hooks.GameUpdate.Deregister(this, OnUpdate);
+              ServerApi.Hooks.ServerLeave.Deregister(this, OnLeave);
+              //ServerApi.Hooks.ClientChatReceived.Deregister(this, OnGreetPlayer);
+              // FIXME: Disabled this for now into i understand how to fix it. *Pychnight
+              // there was no preset examples yet... on how to convert this properly.
+              ServerApi.Hooks.NpcSetDefaultsInt.Deregister(this, OnSetDefaultsInt);
+              ServerApi.Hooks.NpcSetDefaultsString.Deregister(this, OnSetDefaultsString);
             }
             base.Dispose(disposing);
         }
@@ -154,7 +165,7 @@ namespace CustomMonsters
             CustomMonsters.Remove(CM);
         }
 
-        private void OnGetData(GetDataEventArgs e)
+        void OnGetData(GetDataEventArgs e)
         {
             if (e.MsgID == PacketTypes.NpcStrike)
             {
@@ -196,7 +207,7 @@ namespace CustomMonsters
             }
         }
 
-        private void OnInitialize()
+        void OnInitialize(EventArgs e)
         {
             LoadAllCustomMonsters();
             Commands.ChatCommands.Add(new Command("spawncustommonsters", SpawnCustomMonsterPlayer, "scm"));
@@ -204,7 +215,7 @@ namespace CustomMonsters
 
         }
 
-        private void OnUpdate()
+        void OnUpdate(EventArgs e)
         {
             SpawnInZones();
             HandleShooters();
@@ -218,23 +229,24 @@ namespace CustomMonsters
             RemoveInactive();
         }
 
-        private void OnGreetPlayer(int who, HandledEventArgs e)
+        //void OnGreetPlayer(int who, HandledEventArgs e)
+//{
+      //      lock (CMPlayers)
+     //       {
+     //           CMPlayers.Add(new CMPlayer(who));
+     //       }
+     //   }
+
+        void OnLeave(LeaveEventArgs e)
         {
             lock (CMPlayers)
             {
-                CMPlayers.Add(new CMPlayer(who));
+                //CMPlayers.Remove(CMPlayers.Find(player => Players[player.Index] == ply));
+                // FIXME: I'm not sure what this converts over to in 1.2 format * Pychnight
             }
         }
 
-        private void OnLeave(int ply)
-        {
-            lock (CMPlayers)
-            {
-                CMPlayers.Remove(CMPlayers.Find(player => player.Index == ply));
-            }
-        }
-
-        private void OnChat(messageBuffer msg, int ply, string text, HandledEventArgs e)
+        void OnChat(ServerChatEventArgs e)
         {
         }
 
@@ -306,6 +318,8 @@ namespace CustomMonsters
             Custom.boss = CMType.Boss ?? Custom.boss;
             Custom.noGravity = CMType.noGravity ?? Custom.noGravity;
             Custom.noTileCollide = CMType.noTileCollide ?? Custom.noTileCollide;
+            
+
 
             Custom.value = CMType.Value ?? Custom.value;
             var fire = CMType.OnFire ?? Custom.onFire;
@@ -638,6 +652,13 @@ namespace CustomMonsters
             List<BiomeData> HallowData = new List<BiomeData>();
             List<CustomMonsterType> Forest = new List<CustomMonsterType>();
             List<BiomeData> ForestData = new List<BiomeData>();
+            List<BiomeData> SnowData = new List<BiomeData>();
+            List<CustomMonsterType> Snow = new List<CustomMonsterType>();
+            List<BiomeData> BloodData = new List<BiomeData>();
+            List<CustomMonsterType> Blood = new List<CustomMonsterType>();
+            List<BiomeData> CandleData = new List<BiomeData>();
+            List<CustomMonsterType> Candle = new List<CustomMonsterType>();
+            
 
             List<CustomMonsterType> cmtypes = CMTypes.FindAll(cmtype => cmtype.BiomeData.Count > 0);
             foreach (CustomMonsterType cmtype in cmtypes)
@@ -679,6 +700,21 @@ namespace CustomMonsters
                             Forest.Add(tempcmtype);  
                             ForestData.Add(bd);                                                
                             break;
+                        }case "snow":
+                        {
+                            Snow.Add(cmtype);
+                            SnowData.Add(bd);
+                            break;
+                        }case "blood":
+                        {
+                            Blood.Add(cmtype);
+                            BloodData.Add(bd);
+                            break;
+                        }case "candle":
+                        {
+                            Candle.Add(cmtype);
+                            CandleData.Add(bd);
+                            break;
                         }
                     }
                 }
@@ -693,12 +729,19 @@ namespace CustomMonsters
                 CMPlayers.FindAll(player => player.TSPlayer != null && player.TSPlayer.TPlayer.zoneHoly == true);
             List<CMPlayer> JunglePlayers =
                 CMPlayers.FindAll(player => player.TSPlayer != null && player.TSPlayer.TPlayer.zoneJungle == true);
+            List<CMPlayer> SnowPlayers =
+            CMPlayers.FindAll(player => player.TSPlayer != null && player.TSPlayer.TPlayer.zoneSnow == true);
+            List<CMPlayer> BloodPlayers =
+            CMPlayers.FindAll(player => player.TSPlayer != null && player.TSPlayer.TPlayer.zoneBlood == true);
+            List<CMPlayer> CandlePlayers =
+            CMPlayers.FindAll(player => player.TSPlayer != null && player.TSPlayer.TPlayer.zoneCandle == true);
             List<CMPlayer> ForestPlayers =
                 CMPlayers.FindAll(
                     player =>
                     player.TSPlayer != null &&
                     (player.TSPlayer.TPlayer.zoneJungle == false && player.TSPlayer.TPlayer.zoneDungeon == false &&
-                        player.TSPlayer.TPlayer.zoneMeteor == false && player.TSPlayer.TPlayer.zoneEvil == false));
+                        player.TSPlayer.TPlayer.zoneMeteor == false && player.TSPlayer.TPlayer.zoneEvil == false &&
+                        player.TSPlayer.TPlayer.zoneSnow == false && player.TSPlayer.TPlayer.zoneBlood == false && player.TSPlayer.TPlayer.zoneCandle == false ));
 
             BiomeSpawn(Corruption, CorruptionData, CorruptionPlayers);
             BiomeSpawn(Dungeon, DungeonData, DungeonPlayers);
@@ -706,6 +749,9 @@ namespace CustomMonsters
             BiomeSpawn(Jungle, JungleData, JunglePlayers);
             BiomeSpawn(Hallow, HallowData, HallowPlayers);
             BiomeSpawn(Forest, ForestData, ForestPlayers);
+            BiomeSpawn(Snow, SnowData, SnowPlayers);
+            BiomeSpawn(Blood, BloodData, BloodPlayers);
+            BiomeSpawn(Candle, CandleData, CandlePlayers);
         }
 
         private static void BiomeSpawn(List<CustomMonsterType> BiomeType, List<BiomeData> BiomeData, List<CMPlayer> BiomePlayer)
@@ -800,6 +846,21 @@ namespace CustomMonsters
             }
         }
 
+        
+   // FIXME: Solve Crash in SpawninRegions *Reported by pychnight
+//System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.
+//Parameter name: index
+//at System.ThrowHelper.ThrowArgumentOutOfRangeException()
+//at System.Collections.Generic.List`1.get_Item(Int32 index)
+//at CustomMonsters.CustomMonstersPlugin.SpawnInRegions()
+//at CustomMonsters.CustomMonstersPlugin.OnUpdate()
+//at System.Action.Invoke()
+//at Hooks.GameHooks.OnUpdate(Boolean pre)
+//at Terraria.Main.DedServ()
+//at Terraria.ProgramServer.Main(String[] args)
+
+//Delete area when this crash is solved
+
         private static void SpawnInRegions()
         {
             List<CustomMonsterType> RSers = CMTypes.FindAll(CMType => CMType.SpawnRegions.Count > 0);
@@ -820,6 +881,8 @@ namespace CustomMonsters
                                     if (SR.MonstersInRegion != null)
                                     {
                                         //Log.ConsoleError("monster in region: " + SR.MonstersInRegion.Count.ToString() + " Max Spawns: " + SR.MaxSpawns);
+                                        // TODO: Fix monsters, so they don't immeditly spawn when entering the region * Pychnight
+                                        // force the player to wait for monster set spawn times. - this also needs to apply for normal biomes spawning system.
                                         if (SR.MonstersInRegion.Count < SR.MaxSpawns)
                                         {
                                             int xRandom;
@@ -876,6 +939,19 @@ namespace CustomMonsters
                 }
             }
         }
+        
+// FIXME: HandleBuffers Crash *Reported by Pychnight
+//System.NullReferenceException: Object reference not set to an instance of an object.
+//at CustomMonsters.CustomMonstersPlugin.<HandleBuffers>b__3b(CustomMonster CM)
+//at System.Collections.Generic.List`1.FindAll(Predicate`1 match)
+//at CustomMonsters.CustomMonstersPlugin.HandleBuffers()
+//at CustomMonsters.CustomMonstersPlugin.OnUpdate()
+//at System.Action.Invoke()
+//at Hooks.GameHooks.OnUpdate(Boolean pre)
+//at Terraria.Main.DedServ()
+//at Terraria.ProgramServer.Main(String[] args)
+
+//Delete area when this crash is solved
 
     private static void LoadCustomMonstersFromText()
     {

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Terraria;
-using Hooks;
 using TShockAPI;
 using TShockAPI.DB;
 using System.ComponentModel;
@@ -209,7 +208,7 @@ namespace CustomMonsters
         internal string Name { get; set; }
         internal int BaseType { get; set; }
         internal int? Life { get; set; }
-
+        
         internal List<BlitzData> BlitzData { get; set; }
         internal List<CBlitzData> CBlitzData { get; set; }
         internal List<ShooterData> ShooterData { get; set; }
